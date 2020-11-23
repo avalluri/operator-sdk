@@ -300,7 +300,10 @@ func applyWebhooks(c *collector.Manifests, csv *operatorsv1alpha1.ClusterService
 		}
 		webhookDescriptions = append(webhookDescriptions, mutatingToWebhookDescription(webhook, depName, svc))
 	}
-	csv.Spec.WebhookDefinitions = webhookDescriptions
+
+	if len(webhookDescriptions) != 0 {
+		csv.Spec.WebhookDefinitions = webhookDescriptions
+	}
 }
 
 // The default AdmissionReviewVersions set in a CSV if not set in the source webhook.
