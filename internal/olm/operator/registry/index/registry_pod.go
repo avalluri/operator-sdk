@@ -50,6 +50,8 @@ type BundleItem struct {
 	ImageTag string `json:"imageTag"`
 	// AddMode describes how the bundle should be added to an index image.
 	AddMode BundleAddMode `json:"mode"`
+	// SkipTLS controls wether to ignore SSL errors while pulling bundle image from registry server.
+	SkipTLS bool `json:"SkipTLS"`
 }
 
 // RegistryPod holds resources necessary for creation of a registry server
@@ -302,7 +304,7 @@ func newBool(b bool) *bool {
 
 const cmdTemplate = `/bin/mkdir -p {{ dirname .DBPath }} && \
 {{- range $i, $item := .BundleItems }}
-/bin/opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} && \
+/bin/opm registry add -d {{ $.DBPath }} -b {{ $item.ImageTag }} --mode={{ $item.AddMode }}{{ if $.CASecretName }} --ca-file=/certs/cert.pem{{ end }} --skip-tls={{ $item.SkipTLS }} && \
 {{- end }}
 /bin/opm registry serve -d {{ .DBPath }} -p {{ .GRPCPort }}
 `

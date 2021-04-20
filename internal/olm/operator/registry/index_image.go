@@ -62,6 +62,7 @@ type IndexImageCatalogCreator struct {
 	PackageName   string
 	IndexImage    string
 	BundleImage   string
+	SkipTLS       bool
 	BundleAddMode index.BundleAddMode
 	SecretName    string
 	CASecretName  string
@@ -87,6 +88,8 @@ func (c *IndexImageCatalogCreator) BindFlags(fs *pflag.FlagSet) {
 		"Name of a generic secret containing a PEM root certificate file required to pull bundle images. "+
 			"This secret *must* be in the namespace that this command is configured to run in, "+
 			"and the file *must* be encoded under the key \"cert.pem\"")
+	fs.BoolVar(&c.SkipTLS, "skip-tls", false, "skip authentication of image registry TLS "+
+		"certificate when pulling a bundle image in-cluster")
 }
 
 func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string) (*v1alpha1.CatalogSource, error) {
@@ -101,7 +104,7 @@ func (c IndexImageCatalogCreator) CreateCatalog(ctx context.Context, name string
 
 	c.setAddMode()
 
-	newItems := []index.BundleItem{{ImageTag: c.BundleImage, AddMode: c.BundleAddMode}}
+	newItems := []index.BundleItem{{ImageTag: c.BundleImage, AddMode: c.BundleAddMode, SkipTLS: c.SkipTLS}}
 	if err := c.createAnnotatedRegistry(ctx, cs, newItems); err != nil {
 		return nil, fmt.Errorf("error creating registry pod: %v", err)
 	}
@@ -137,7 +140,7 @@ func (c IndexImageCatalogCreator) UpdateCatalog(ctx context.Context, cs *v1alpha
 
 	c.setAddMode()
 
-	newItem := index.BundleItem{ImageTag: c.BundleImage, AddMode: c.BundleAddMode}
+	newItem := index.BundleItem{ImageTag: c.BundleImage, AddMode: c.BundleAddMode, SkipTLS: c.SkipTLS}
 	existingItems = append(existingItems, newItem)
 
 	opts := []func(*v1alpha1.CatalogSource){

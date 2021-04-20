@@ -104,6 +104,15 @@ var _ = Describe("RegistryPod", func() {
 				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, defaultBundleItems, true)))
 			})
 
+			It("should return a container command for image with --skip-tls", func() {
+				bundles := []BundleItem{defaultBundleItems[0]}
+				bundles[0].SkipTLS = true
+				rp.BundleItems = bundles
+				output, err := rp.getContainerCmd()
+				Expect(err).To(BeNil())
+				Expect(output).Should(Equal(containerCommandFor(defaultDBPath, bundles, false)))
+			})
+
 			It("should return a valid container command for three images", func() {
 				bundleItems := append(defaultBundleItems,
 					BundleItem{
@@ -113,6 +122,11 @@ var _ = Describe("RegistryPod", func() {
 					BundleItem{
 						ImageTag: "quay.io/example/example-operator-bundle:1.0.1",
 						AddMode:  SemverBundleAddMode,
+					},
+					BundleItem{
+						ImageTag: "localhost/example-operator-bundle:1.0.1",
+						AddMode:  SemverBundleAddMode,
+						SkipTLS:  true,
 					},
 				)
 				rp2 := RegistryPod{
@@ -224,7 +238,7 @@ func containerCommandFor(dbPath string, items []BundleItem, hasCA bool) string {
 	}
 	additions := &strings.Builder{}
 	for _, item := range items {
-		additions.WriteString(fmt.Sprintf("/bin/opm registry add -d %s -b %s --mode=%s%s && \\\n", dbPath, item.ImageTag, item.AddMode, caFlag))
+		additions.WriteString(fmt.Sprintf("/bin/opm registry add -d %s -b %s --mode=%s%s --skip-tls=%v && \\\n", dbPath, item.ImageTag, item.AddMode, caFlag, item.SkipTLS))
 	}
 	return fmt.Sprintf("/bin/mkdir -p /database && \\\n%s/bin/opm registry serve -d /database/index.db -p 50051\n", additions.String())
 }
